@@ -26,19 +26,19 @@
     <div class="stat-grid">
       <div class="display-tile">
         <div class="display-label"><span>إجمالي دخل اليوم</span></div>
-        <div class="display-value is-income">0.00<span class="display-unit">د.إ</span></div>
+        <div class="display-value is-income" id="totIncome">0.00<span class="display-unit">د.إ</span></div>
       </div>
       <div class="display-tile">
         <div class="display-label"><span>المنصرفات</span></div>
-        <div class="display-value is-expense">0.00<span class="display-unit">د.إ</span></div>
+        <div class="display-value is-expense" id="totExpense">0.00<span class="display-unit">د.إ</span></div>
       </div>
       <div class="display-tile">
         <div class="display-label"><span>السحوبات الشخصية</span></div>
-        <div class="display-value">0.00<span class="display-unit">د.إ</span></div>
+        <div class="display-value" id="totWithdraw">0.00<span class="display-unit">د.إ</span></div>
       </div>
       <div class="display-tile">
         <div class="display-label"><span>صافي الدخل</span></div>
-        <div class="display-value is-income">0.00<span class="display-unit">د.إ</span></div>
+        <div class="display-value is-income" id="totNet">0.00<span class="display-unit">د.إ</span></div>
       </div>
     </div>
 
@@ -59,17 +59,17 @@
             <tr>
               <td><span class="tag tag-domain-acc">الإكسسوارات</span></td>
               <td>جراب · ستيكر · شاحن · وصلة · سماعة · باوربانك</td>
-              <td class="num">0.00</td>
+              <td class="num" id="domSales_الإكسسوارات">0.00</td>
             </tr>
             <tr>
               <td><span class="tag tag-domain-phone">التلفونات</span></td>
               <td>جهاز</td>
-              <td class="num">0.00</td>
+              <td class="num" id="domSales_التلفونات">0.00</td>
             </tr>
             <tr>
               <td><span class="tag tag-domain-service">الصيانة والسكند</span></td>
               <td>صيانة · سكند</td>
-              <td class="num">0.00</td>
+              <td class="num" id="domSales_الصيانة والسكند">0.00</td>
             </tr>
           </tbody>
         </table>
@@ -81,10 +81,12 @@
         <div class="card-title"><span class="ic">▤</span> آخر الإشعارات</div>
         <a class="btn btn-ghost" href="finance.html">فتح المالي العام</a>
       </div>
-      <div class="empty-state">
-        <div class="ic">◈</div>
-        <strong>لا توجد إشعارات بعد</strong>
-        <p>أي إشعار يُضاف من صفحة المالي العام سيظهر هنا فور ربط الخادم.</p>
+      <div id="noticesMount">
+        <div class="empty-state">
+          <div class="ic">◈</div>
+          <strong>لا توجد إشعارات بعد</strong>
+          <p>أي إشعار يُضاف من صفحة المالي العام سيظهر هنا.</p>
+        </div>
       </div>
     </div>
   </main>
@@ -98,8 +100,49 @@
   document.getElementById("todayChip").textContent = todayReadable();
   renderSyncNote(
     document.getElementById("dashSyncMount"),
-    "الأرقام أدناه توضيحية إلى حين ربط الواجهة بالخادم — ستُحسب تلقائيًا من المبيعات والمشتريات الفعلية."
+    "متصل بالخادم — الأرقام محسوبة من مبيعات ومشتريات اليوم فعليًا."
   );
+
+  async function loadDashboard(){
+    const result = await callServer("getDashboard", { date: todayISO() });
+
+    if(!result.ok){
+      showFormStatus(document.getElementById("dashSyncMount"), false, result.error || "تعذّر تحميل بيانات اليوم");
+      return;
+    }
+
+    document.getElementById("totIncome").innerHTML = `${formatMoney(result.totalIncome)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totExpense").innerHTML = `${formatMoney(result.expense)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totWithdraw").innerHTML = `${formatMoney(result.withdraw)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totNet").innerHTML = `${formatMoney(result.net)}<span class="display-unit">د.إ</span>`;
+
+    Object.keys(CATEGORIES).forEach(domain => {
+      const cell = document.getElementById(`domSales_${domain}`);
+      if(cell) cell.textContent = formatMoney((result.byDomain && result.byDomain[domain]) || 0);
+    });
+
+    const mount = document.getElementById("noticesMount");
+    if(result.notices && result.notices.length > 0){
+      mount.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>التاريخ</th><th>الإشعار</th><th>التعليق</th></tr></thead>
+            <tbody>
+              ${result.notices.map(n => `
+                <tr>
+                  <td>${n.date}</td>
+                  <td>${n.notice}</td>
+                  <td>${n.comment || "—"}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  }
+
+  loadDashboard();
 </script>
 </body>
 </html>
