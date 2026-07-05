@@ -1,17 +1,21 @@
 /* ============================================================
    الإخوة ستور — دوال وبيانات مشتركة
-   ملاحظة: هذه المرحلة (الواجهة فقط) تعمل بذاكرة المتصفح داخل كل صفحة.
-   عند بناء الخادم (Google Apps Script) سيتم استبدال saveToBackend()
-   واستدعاءات fetchFromBackend() بربط فعلي، دون تغيير في تصميم الواجهة.
+   مرتبط فعليًا بالخادم (Google Apps Script) عبر Cloudflare Worker.
    ============================================================ */
 
-// قائمة البريد المصرح له بالدخول — أي بريد غير موجود هنا يُرفض في صفحة الدخول
-// ملاحظة: هذا تحقق واجهة فقط (مرحلة ما قبل الخادم). عند بناء GAS سيُنقل
-// هذا التحقق فعليًا للخادم على غرار ALLOWED_EMAILS في مشروع LAVNDR120،
-// لأن التحقق من جهة المتصفح فقط غير كافٍ أمنيًا لنظام محاسبي.
-const ALLOWED_EMAILS = [
-  "isgrop2026@gmail.com"
-];
+// رابط الوسيط (Cloudflare Worker) الذي يمرّر الطلبات لخادم GAS
+const PROXY_URL = "https://ikhwastore-proxy.isgrop2026.workers.dev/";
+
+// نفس المفتاح المكتوب في كود GAS (SECRET_KEY) — يجب أن يتطابقا دائمًا
+const SECRET_KEY = "IKHWA_SECRET_2026";
+
+// تحويل اسم الشيت إلى اسم الإجراء المتوقع في GAS
+const ACTION_MAP = {
+  "Sales": "addSale",
+  "Purchases": "addPurchase",
+  "DailySummary": "addSummary",
+  "GeneralFinance": "addFinance"
+};
 
 // المجالات الثلاثة وأصنافها — مرجع مركزي واحد لكل النماذج
 const CATEGORIES = {
@@ -90,12 +94,42 @@ function renderSyncNote(mountEl, message){
   mountEl.prepend(note);
 }
 
-// -------- نقطة الاتصال بالخادم لاحقًا (Google Apps Script) --------
-// عند بناء الخادم، تُستبدل هذه الدالة بنداء fetch فعلي على رابط GAS
-// (بنفس نمط lavndr120-proxy عبر Cloudflare Worker) دون تعديل واجهات النماذج.
+// -------- رسالة حالة سريعة أسفل النموذج (نجاح / فشل الحفظ) --------
+function showFormStatus(mountEl, ok, message){
+  let el = mountEl.querySelector(".form-status");
+  if(!el){
+    el = document.createElement("p");
+    el.className = "form-status";
+    el.style.fontSize = "13px";
+    el.style.marginTop = "10px";
+    el.style.textAlign = "left";
+    mountEl.appendChild(el);
+  }
+  el.style.color = ok ? "var(--income)" : "var(--expense)";
+  el.textContent = message;
+}
+
+// -------- الاتصال الفعلي بالخادم عبر الوسيط --------
+async function callServer(action, payload){
+  try{
+    const res = await fetch(PROXY_URL, {
+      method: "POST",
+      body: JSON.stringify({ key: SECRET_KEY, action, ...payload })
+    });
+    return await res.json();
+  }catch(err){
+    console.error("فشل الاتصال بالخادم:", err);
+    return { ok: false, error: "تعذّر الوصول للخادم — تحقق من الاتصال بالإنترنت" };
+  }
+}
+
 async function saveToBackend(sheetName, payload){
-  console.info(`[معلق] سيتم إرسال البيانات إلى شيت "${sheetName}" بعد ربط الخادم:`, payload);
-  return { ok: true, pending: true };
+  const action = ACTION_MAP[sheetName];
+  return callServer(action, payload);
+}
+
+async function checkEmailOnServer(email){
+  return callServer("checkEmail", { email });
 }
 
 // -------- عناصر التنقل الأساسية --------

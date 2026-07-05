@@ -85,7 +85,7 @@
 
   renderSyncNote(
     document.getElementById("financeSyncMount"),
-    "الإشعارات محفوظة هنا مؤقتًا فقط، وستُخزَّن في شيت المالي العام بعد ربط الخادم."
+    "متصل بالخادم — الإشعارات تُخزَّن مباشرة في شيت المالي العام."
   );
 
   document.getElementById("f_date").value = todayISO();
@@ -109,7 +109,7 @@
     });
   }
 
-  document.getElementById("financeForm").addEventListener("submit", (e) => {
+  document.getElementById("financeForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const row = {
@@ -118,9 +118,23 @@
       comment: document.getElementById("f_comment").value.trim()
     };
 
+    const submitBtn = e.target.querySelector(".btn-primary");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "جاري الحفظ...";
+
+    const result = await saveToBackend("GeneralFinance", row);
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "حفظ الإشعار";
+
+    if(!result.ok){
+      showFormStatus(e.target, false, result.error || "فشل الحفظ، حاول مرة أخرى");
+      return;
+    }
+
+    showFormStatus(e.target, true, "تم حفظ الإشعار بنجاح ✅");
     notices.unshift(row);
     renderNotices();
-    saveToBackend("GeneralFinance", row);
 
     e.target.reset();
     document.getElementById("f_date").value = todayISO();

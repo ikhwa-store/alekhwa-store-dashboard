@@ -102,7 +102,7 @@
 
   renderSyncNote(
     document.getElementById("summarySyncMount"),
-    "إقفالات اليوم محفوظة هنا مؤقتًا فقط، وستُخزَّن في شيت الملخص اليومي بعد ربط الخادم."
+    "متصل بالخادم — إقفالات اليوم تُخزَّن مباشرة في شيت الملخص اليومي."
   );
 
   document.getElementById("d_date").value = todayISO();
@@ -145,7 +145,7 @@
     });
   }
 
-  document.getElementById("summaryForm").addEventListener("submit", (e) => {
+  document.getElementById("summaryForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const row = {
@@ -156,9 +156,23 @@
       note: document.getElementById("d_note").value.trim()
     };
 
+    const submitBtn = e.target.querySelector(".btn-primary");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "جاري الحفظ...";
+
+    const result = await saveToBackend("DailySummary", row);
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "حفظ إقفال اليوم";
+
+    if(!result.ok){
+      showFormStatus(e.target, false, result.error || "فشل الحفظ، حاول مرة أخرى");
+      return;
+    }
+
+    showFormStatus(e.target, true, "تم حفظ الإقفال بنجاح ✅");
     closings.unshift(row);
     renderClosings();
-    saveToBackend("DailySummary", row);
 
     e.target.reset();
     document.getElementById("d_date").value = todayISO();

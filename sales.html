@@ -26,15 +26,15 @@
     <div class="stat-grid">
       <div class="display-tile">
         <div class="display-label"><span>إجمالي اليوم</span></div>
-        <div class="display-value is-income" id="totAll">0.00<span class="display-unit">ج.م</span></div>
+        <div class="display-value is-income" id="totAll">0.00<span class="display-unit">د.إ</span></div>
       </div>
       <div class="display-tile">
         <div class="display-label"><span>كاش</span></div>
-        <div class="display-value" id="totCash">0.00<span class="display-unit">ج.م</span></div>
+        <div class="display-value" id="totCash">0.00<span class="display-unit">د.إ</span></div>
       </div>
       <div class="display-tile">
         <div class="display-label"><span>بنك</span></div>
-        <div class="display-value" id="totBank">0.00<span class="display-unit">ج.م</span></div>
+        <div class="display-value" id="totBank">0.00<span class="display-unit">د.إ</span></div>
       </div>
       <div class="display-tile">
         <div class="display-label"><span>عدد العمليات</span></div>
@@ -134,7 +134,7 @@
 
   renderSyncNote(
     document.getElementById("salesSyncMount"),
-    "العمليات محفوظة في هذه الصفحة مؤقتًا فقط، وستُخزَّن في شيت المبيعات بعد ربط الخادم."
+    "متصل بالخادم — العمليات تُخزَّن مباشرة في شيت المبيعات."
   );
 
   const domainSelect = document.getElementById("s_domain");
@@ -185,13 +185,13 @@
       if(row.pay === "كاش") totalCash += rowTotal; else totalBank += rowTotal;
     });
 
-    document.getElementById("totAll").innerHTML = `${formatMoney(totalAll)}<span class="display-unit">ج.م</span>`;
-    document.getElementById("totCash").innerHTML = `${formatMoney(totalCash)}<span class="display-unit">ج.م</span>`;
-    document.getElementById("totBank").innerHTML = `${formatMoney(totalBank)}<span class="display-unit">ج.م</span>`;
+    document.getElementById("totAll").innerHTML = `${formatMoney(totalAll)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totCash").innerHTML = `${formatMoney(totalCash)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totBank").innerHTML = `${formatMoney(totalBank)}<span class="display-unit">د.إ</span>`;
     document.getElementById("totCount").textContent = sales.length;
   }
 
-  document.getElementById("saleForm").addEventListener("submit", (e) => {
+  document.getElementById("saleForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const row = {
@@ -204,9 +204,23 @@
       note: document.getElementById("s_note").value.trim()
     };
 
+    const submitBtn = e.target.querySelector(".btn-primary");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "جاري الحفظ...";
+
+    const result = await saveToBackend("Sales", row);
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "حفظ العملية";
+
+    if(!result.ok){
+      showFormStatus(e.target, false, result.error || "فشل الحفظ، حاول مرة أخرى");
+      return;
+    }
+
+    showFormStatus(e.target, true, "تم الحفظ في الشيت بنجاح ✅");
     sales.unshift(row);
     renderSales();
-    saveToBackend("Sales", row);
 
     e.target.reset();
     document.getElementById("s_date").value = todayISO();

@@ -132,29 +132,37 @@
 
 <script src="assets/app.js"></script>
 <script>
-  // ملاحظة: هذا التحقق واجهة فقط حاليًا.
-  // عند ربط الخادم، سيُستبدل هذا التحقق المحلي بنداء فعلي إلى GAS
-  // على غرار ALLOWED_EMAILS / Participants في مشروع LAVNDR120،
-  // بحيث يُرفض أي بريد غير مضاف قبل الدخول إلى أي صفحة.
+  // التحقق الآن فعلي عبر الخادم (GAS) بدل القائمة المحلية.
   const form = document.getElementById("loginForm");
   const msg = document.getElementById("loginMsg");
+  const submitBtn = form.querySelector(".login-submit");
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value.trim().toLowerCase();
+    if(!email) return;
 
-    if(!email){
-      return;
-    }
+    msg.classList.remove("show");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "جاري التحقق...";
 
-    const isAllowed = ALLOWED_EMAILS.map(x => x.toLowerCase()).includes(email);
+    const result = await checkEmailOnServer(email);
 
-    if(!isAllowed){
+    submitBtn.disabled = false;
+    submitBtn.textContent = "دخول";
+
+    if(!result.ok){
+      msg.textContent = result.error || "تعذّر الاتصال بالخادم، حاول مرة أخرى";
       msg.classList.add("show");
       return;
     }
 
-    msg.classList.remove("show");
+    if(!result.allowed){
+      msg.textContent = "هذا البريد غير مضاف إلى النظام. راجع صاحب الحساب لإضافته.";
+      msg.classList.add("show");
+      return;
+    }
+
     window.location.href = `dashboard.html?email=${encodeURIComponent(email)}`;
   });
 </script>
