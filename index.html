@@ -141,13 +141,19 @@
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const email = document.getElementById("email").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
 
     if(!email){
       return;
     }
 
-    // TODO: استبدال هذا بنداء fetch فعلي إلى GAS للتحقق من ALLOWED_EMAILS
+    const isAllowed = ALLOWED_EMAILS.map(x => x.toLowerCase()).includes(email);
+
+    if(!isAllowed){
+      msg.classList.add("show");
+      return;
+    }
+
     msg.classList.remove("show");
     window.location.href = `dashboard.html?email=${encodeURIComponent(email)}`;
   });
