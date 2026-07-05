@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الإخوة ستور — الملخص اليومي</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-mount"></aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">إقفال اليوم</div>
+        <h1 class="page-title">الملخص اليومي</h1>
+        <p class="page-sub">إجمالي الدخل، المنصرفات، والسحوبات الشخصية — وصافي الدخل يُحسب تلقائيًا</p>
+      </div>
+      <div class="today-chip" id="todayChip"></div>
+    </div>
+
+    <div id="summarySyncMount"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">Σ</span> إقفال يوم جديد</div>
+      </div>
+
+      <form id="summaryForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="d_date">التاريخ</label>
+            <input type="date" id="d_date" required>
+          </div>
+          <div class="field">
+            <label for="d_income">إجمالي الدخل الكلي</label>
+            <input type="number" id="d_income" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+          <div class="field">
+            <label for="d_expense">المنصرفات</label>
+            <input type="number" id="d_expense" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+
+          <div class="field">
+            <label for="d_withdraw">السحوبات الشخصية</label>
+            <input type="number" id="d_withdraw" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+          <div class="field span-2">
+            <label>صافي الدخل (تلقائي)</label>
+            <input type="text" id="d_net" value="0.00" disabled>
+          </div>
+
+          <div class="field span-3">
+            <label for="d_note">الملاحظة (اختياري)</label>
+            <input type="text" id="d_note" placeholder="أي تفصيل عن يوم العمل">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="reset" class="btn btn-ghost">مسح</button>
+          <button type="submit" class="btn btn-primary">حفظ إقفال اليوم</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">▤</span> سجل الإقفالات</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th class="num">إجمالي الدخل</th>
+              <th class="num">المنصرفات</th>
+              <th class="num">السحوبات</th>
+              <th class="num">صافي الدخل</th>
+              <th>الملاحظة</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="summaryEmpty">
+        <div class="ic">Σ</div>
+        <strong>لا يوجد إقفال محفوظ بعد</strong>
+        <p>سجّل إقفال أول يوم من النموذج أعلاه.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomnav-mount"></nav>
+
+<script src="assets/app.js"></script>
+<script>
+  renderShell("summary");
+  document.getElementById("todayChip").textContent = todayReadable();
+
+  renderSyncNote(
+    document.getElementById("summarySyncMount"),
+    "إقفالات اليوم محفوظة هنا مؤقتًا فقط، وستُخزَّن في شيت الملخص اليومي بعد ربط الخادم."
+  );
+
+  document.getElementById("d_date").value = todayISO();
+
+  const incomeInput = document.getElementById("d_income");
+  const expenseInput = document.getElementById("d_expense");
+  const withdrawInput = document.getElementById("d_withdraw");
+  const netField = document.getElementById("d_net");
+
+  function updateNet(){
+    const income = Number(incomeInput.value) || 0;
+    const expense = Number(expenseInput.value) || 0;
+    const withdraw = Number(withdrawInput.value) || 0;
+    const net = income - expense - withdraw;
+    netField.value = formatMoney(net);
+    netField.style.color = net < 0 ? "var(--expense)" : "var(--income)";
+  }
+  [incomeInput, expenseInput, withdrawInput].forEach(el => el.addEventListener("input", updateNet));
+
+  let closings = [];
+
+  function renderClosings(){
+    const body = document.getElementById("summaryBody");
+    const empty = document.getElementById("summaryEmpty");
+    body.innerHTML = "";
+    empty.style.display = closings.length === 0 ? "block" : "none";
+
+    closings.forEach(row => {
+      const net = row.income - row.expense - row.withdraw;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.date}</td>
+        <td class="num">${formatMoney(row.income)}</td>
+        <td class="num">${formatMoney(row.expense)}</td>
+        <td class="num">${formatMoney(row.withdraw)}</td>
+        <td class="num" style="color:${net < 0 ? "var(--expense)" : "var(--income)"}">${formatMoney(net)}</td>
+        <td>${row.note || "—"}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  document.getElementById("summaryForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const row = {
+      date: document.getElementById("d_date").value,
+      income: Number(incomeInput.value),
+      expense: Number(expenseInput.value),
+      withdraw: Number(withdrawInput.value),
+      note: document.getElementById("d_note").value.trim()
+    };
+
+    closings.unshift(row);
+    renderClosings();
+    saveToBackend("DailySummary", row);
+
+    e.target.reset();
+    document.getElementById("d_date").value = todayISO();
+    netField.value = "0.00";
+  });
+
+  renderClosings();
+</script>
+</body>
+</html>

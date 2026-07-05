@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الإخوة ستور — المالي العام</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-mount"></aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">متابعة عامة</div>
+        <h1 class="page-title">المالي العام</h1>
+        <p class="page-sub">إشعارات وتعليقات عامة غير مرتبطة بعملية بيع أو شراء محددة</p>
+      </div>
+      <div class="today-chip" id="todayChip"></div>
+    </div>
+
+    <div id="financeSyncMount"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">＋</span> إشعار جديد</div>
+      </div>
+
+      <form id="financeForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="f_date">التاريخ</label>
+            <input type="date" id="f_date" required>
+          </div>
+          <div class="field span-2">
+            <label for="f_notice">الإشعار</label>
+            <input type="text" id="f_notice" placeholder="مثال: تحويل رصيد إلى حساب المحل" required>
+          </div>
+          <div class="field span-3">
+            <label for="f_comment">التعليق</label>
+            <textarea id="f_comment" rows="3" placeholder="تفاصيل إضافية عن الإشعار"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="reset" class="btn btn-ghost">مسح</button>
+          <button type="submit" class="btn btn-primary">حفظ الإشعار</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">◈</span> سجل الإشعارات</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>الإشعار</th>
+              <th>التعليق</th>
+            </tr>
+          </thead>
+          <tbody id="financeBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="financeEmpty">
+        <div class="ic">◈</div>
+        <strong>لا توجد إشعارات مسجّلة بعد</strong>
+        <p>أضف أول إشعار من النموذج أعلاه، وسيظهر أيضًا في الصفحة الرئيسية.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomnav-mount"></nav>
+
+<script src="assets/app.js"></script>
+<script>
+  renderShell("finance");
+  document.getElementById("todayChip").textContent = todayReadable();
+
+  renderSyncNote(
+    document.getElementById("financeSyncMount"),
+    "الإشعارات محفوظة هنا مؤقتًا فقط، وستُخزَّن في شيت المالي العام بعد ربط الخادم."
+  );
+
+  document.getElementById("f_date").value = todayISO();
+
+  let notices = [];
+
+  function renderNotices(){
+    const body = document.getElementById("financeBody");
+    const empty = document.getElementById("financeEmpty");
+    body.innerHTML = "";
+    empty.style.display = notices.length === 0 ? "block" : "none";
+
+    notices.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.date}</td>
+        <td>${row.notice}</td>
+        <td>${row.comment || "—"}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  document.getElementById("financeForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const row = {
+      date: document.getElementById("f_date").value,
+      notice: document.getElementById("f_notice").value.trim(),
+      comment: document.getElementById("f_comment").value.trim()
+    };
+
+    notices.unshift(row);
+    renderNotices();
+    saveToBackend("GeneralFinance", row);
+
+    e.target.reset();
+    document.getElementById("f_date").value = todayISO();
+  });
+
+  renderNotices();
+</script>
+</body>
+</html>

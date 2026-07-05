@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الإخوة ستور — المشتريات</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-mount"></aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">إدخال يومي</div>
+        <h1 class="page-title">المشتريات</h1>
+        <p class="page-sub">سجّل كل عملية شراء لتحديث تكلفة المخزون تلقائيًا</p>
+      </div>
+      <div class="today-chip" id="todayChip"></div>
+    </div>
+
+    <div id="purchSyncMount"></div>
+
+    <div class="stat-grid">
+      <div class="display-tile">
+        <div class="display-label"><span>إجمالي مشتريات اليوم</span></div>
+        <div class="display-value is-expense" id="totAll">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>عدد القطع</span></div>
+        <div class="display-value" id="totQty">0</div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>عدد العمليات</span></div>
+        <div class="display-value" id="totCount">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">＋</span> عملية شراء جديدة</div>
+      </div>
+
+      <form id="purchForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="p_date">التاريخ</label>
+            <input type="date" id="p_date" required>
+          </div>
+          <div class="field">
+            <label for="p_domain">المجال</label>
+            <select id="p_domain" required></select>
+          </div>
+          <div class="field">
+            <label for="p_item">الصنف</label>
+            <select id="p_item" required></select>
+          </div>
+
+          <div class="field">
+            <label for="p_qty">العدد</label>
+            <input type="number" id="p_qty" min="1" step="1" placeholder="1" required>
+          </div>
+          <div class="field">
+            <label for="p_price">سعر الحبة</label>
+            <input type="number" id="p_price" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+          <div class="field">
+            <label>الإجمالي</label>
+            <input type="text" id="p_calc" value="0.00" disabled>
+          </div>
+
+          <div class="field span-3">
+            <label for="p_note">الملاحظة (اختياري)</label>
+            <input type="text" id="p_note" placeholder="اسم المورّد أو أي تفصيل إضافي">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="reset" class="btn btn-ghost">مسح</button>
+          <button type="submit" class="btn btn-primary">حفظ العملية</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">▴</span> مشتريات اليوم</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>المجال</th>
+              <th>الصنف</th>
+              <th class="num">العدد</th>
+              <th class="num">سعر الحبة</th>
+              <th class="num">الإجمالي</th>
+              <th>الملاحظة</th>
+            </tr>
+          </thead>
+          <tbody id="purchBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="purchEmpty">
+        <div class="ic">▴</div>
+        <strong>لا توجد مشتريات مسجّلة اليوم</strong>
+        <p>أضف أول عملية شراء من النموذج أعلاه.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomnav-mount"></nav>
+
+<script src="assets/app.js"></script>
+<script>
+  renderShell("purchases");
+  document.getElementById("todayChip").textContent = todayReadable();
+
+  renderSyncNote(
+    document.getElementById("purchSyncMount"),
+    "العمليات محفوظة في هذه الصفحة مؤقتًا فقط، وستُخزَّن في شيت المشتريات بعد ربط الخادم."
+  );
+
+  const domainSelect = document.getElementById("p_domain");
+  const itemSelect = document.getElementById("p_item");
+  populateDomainSelect(domainSelect);
+  populateItemSelect(itemSelect, "");
+
+  domainSelect.addEventListener("change", () => {
+    populateItemSelect(itemSelect, domainSelect.value);
+  });
+
+  document.getElementById("p_date").value = todayISO();
+
+  const qtyInput = document.getElementById("p_qty");
+  const priceInput = document.getElementById("p_price");
+  const calcField = document.getElementById("p_calc");
+
+  function updateCalc(){
+    const qty = Number(qtyInput.value) || 0;
+    const price = Number(priceInput.value) || 0;
+    calcField.value = formatMoney(qty * price);
+  }
+  qtyInput.addEventListener("input", updateCalc);
+  priceInput.addEventListener("input", updateCalc);
+
+  let purchases = [];
+
+  function renderPurchases(){
+    const body = document.getElementById("purchBody");
+    const empty = document.getElementById("purchEmpty");
+    body.innerHTML = "";
+
+    empty.style.display = purchases.length === 0 ? "block" : "none";
+
+    let totalAll = 0, totalQty = 0;
+
+    purchases.forEach(row => {
+      const tr = document.createElement("tr");
+      const domainClass = DOMAIN_TAG_CLASS[row.domain] || "";
+      const rowTotal = row.qty * row.price;
+      tr.innerHTML = `
+        <td>${row.date}</td>
+        <td><span class="tag ${domainClass}">${row.domain}</span></td>
+        <td>${row.item}</td>
+        <td class="num">${row.qty}</td>
+        <td class="num">${formatMoney(row.price)}</td>
+        <td class="num">${formatMoney(rowTotal)}</td>
+        <td>${row.note || "—"}</td>
+      `;
+      body.appendChild(tr);
+      totalAll += rowTotal;
+      totalQty += row.qty;
+    });
+
+    document.getElementById("totAll").innerHTML = `${formatMoney(totalAll)}<span class="display-unit">ج.م</span>`;
+    document.getElementById("totQty").textContent = totalQty;
+    document.getElementById("totCount").textContent = purchases.length;
+  }
+
+  document.getElementById("purchForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const row = {
+      date: document.getElementById("p_date").value,
+      domain: domainSelect.value,
+      item: itemSelect.value,
+      qty: Number(qtyInput.value),
+      price: Number(priceInput.value),
+      note: document.getElementById("p_note").value.trim()
+    };
+
+    purchases.unshift(row);
+    renderPurchases();
+    saveToBackend("Purchases", row);
+
+    e.target.reset();
+    document.getElementById("p_date").value = todayISO();
+    populateItemSelect(itemSelect, "");
+    calcField.value = "0.00";
+  });
+
+  renderPurchases();
+</script>
+</body>
+</html>

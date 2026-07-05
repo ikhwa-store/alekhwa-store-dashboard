@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الإخوة ستور — الرئيسية</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-mount"></aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">نظرة عامة</div>
+        <h1 class="page-title">لوحة اليوم</h1>
+        <p class="page-sub">ملخص سريع لحركة المحل قبل الدخول للتفاصيل</p>
+      </div>
+      <div class="today-chip" id="todayChip"></div>
+    </div>
+
+    <div id="dashSyncMount"></div>
+
+    <div class="stat-grid">
+      <div class="display-tile">
+        <div class="display-label"><span>إجمالي دخل اليوم</span></div>
+        <div class="display-value is-income">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>المنصرفات</span></div>
+        <div class="display-value is-expense">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>السحوبات الشخصية</span></div>
+        <div class="display-value">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>صافي الدخل</span></div>
+        <div class="display-value is-income">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">◈</span> المجالات الثلاثة</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>المجال</th>
+              <th>الأصناف المرتبطة</th>
+              <th class="num">مبيعات اليوم</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-domain-acc">الإكسسوارات</span></td>
+              <td>جراب · ستيكر · شاحن · وصلة · سماعة · باوربانك</td>
+              <td class="num">0.00</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-domain-phone">التلفونات</span></td>
+              <td>جهاز</td>
+              <td class="num">0.00</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-domain-service">الصيانة والسكند</span></td>
+              <td>صيانة · سكند</td>
+              <td class="num">0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">▤</span> آخر الإشعارات</div>
+        <a class="btn btn-ghost" href="finance.html">فتح المالي العام</a>
+      </div>
+      <div class="empty-state">
+        <div class="ic">◈</div>
+        <strong>لا توجد إشعارات بعد</strong>
+        <p>أي إشعار يُضاف من صفحة المالي العام سيظهر هنا فور ربط الخادم.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomnav-mount"></nav>
+
+<script src="assets/app.js"></script>
+<script>
+  renderShell("dashboard");
+  document.getElementById("todayChip").textContent = todayReadable();
+  renderSyncNote(
+    document.getElementById("dashSyncMount"),
+    "الأرقام أدناه توضيحية إلى حين ربط الواجهة بالخادم — ستُحسب تلقائيًا من المبيعات والمشتريات الفعلية."
+  );
+</script>
+</body>
+</html>

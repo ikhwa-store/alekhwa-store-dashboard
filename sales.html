@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الإخوة ستور — المبيعات</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar-mount"></aside>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <div class="page-eyebrow">إدخال يومي</div>
+        <h1 class="page-title">المبيعات</h1>
+        <p class="page-sub">سجّل كل عملية بيع بمجالها وصنفها وطريقة الدفع</p>
+      </div>
+      <div class="today-chip" id="todayChip"></div>
+    </div>
+
+    <div id="salesSyncMount"></div>
+
+    <div class="stat-grid">
+      <div class="display-tile">
+        <div class="display-label"><span>إجمالي اليوم</span></div>
+        <div class="display-value is-income" id="totAll">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>كاش</span></div>
+        <div class="display-value" id="totCash">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>بنك</span></div>
+        <div class="display-value" id="totBank">0.00<span class="display-unit">ج.م</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>عدد العمليات</span></div>
+        <div class="display-value" id="totCount">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">＋</span> عملية بيع جديدة</div>
+      </div>
+
+      <form id="saleForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="s_date">التاريخ</label>
+            <input type="date" id="s_date" required>
+          </div>
+          <div class="field">
+            <label for="s_domain">المجال</label>
+            <select id="s_domain" required></select>
+          </div>
+          <div class="field">
+            <label for="s_item">الصنف</label>
+            <select id="s_item" required></select>
+          </div>
+
+          <div class="field">
+            <label for="s_qty">العدد</label>
+            <input type="number" id="s_qty" min="1" step="1" placeholder="1" required>
+          </div>
+          <div class="field">
+            <label for="s_price">السعر (للقطعة)</label>
+            <input type="number" id="s_price" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+          <div class="field">
+            <label>طريقة الدفع</label>
+            <div class="pay-toggle" id="s_pay">
+              <label class="pay-option checked">
+                <input type="radio" name="s_pay" value="كاش" checked> كاش
+              </label>
+              <label class="pay-option">
+                <input type="radio" name="s_pay" value="بنك"> بنك
+              </label>
+            </div>
+          </div>
+
+          <div class="field span-3">
+            <label for="s_note">الملاحظة (اختياري)</label>
+            <input type="text" id="s_note" placeholder="أي تفصيل إضافي عن العملية">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="reset" class="btn btn-ghost">مسح</button>
+          <button type="submit" class="btn btn-primary">حفظ العملية</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">▾</span> عمليات اليوم</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>المجال</th>
+              <th>الصنف</th>
+              <th class="num">العدد</th>
+              <th class="num">السعر</th>
+              <th class="num">الإجمالي</th>
+              <th>الدفع</th>
+              <th>الملاحظة</th>
+            </tr>
+          </thead>
+          <tbody id="salesBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="salesEmpty">
+        <div class="ic">▾</div>
+        <strong>لا توجد عمليات بيع مسجّلة اليوم</strong>
+        <p>أضف أول عملية من النموذج أعلاه.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav" id="bottomnav-mount"></nav>
+
+<script src="assets/app.js"></script>
+<script>
+  renderShell("sales");
+  document.getElementById("todayChip").textContent = todayReadable();
+
+  renderSyncNote(
+    document.getElementById("salesSyncMount"),
+    "العمليات محفوظة في هذه الصفحة مؤقتًا فقط، وستُخزَّن في شيت المبيعات بعد ربط الخادم."
+  );
+
+  const domainSelect = document.getElementById("s_domain");
+  const itemSelect = document.getElementById("s_item");
+  populateDomainSelect(domainSelect);
+  populateItemSelect(itemSelect, "");
+
+  domainSelect.addEventListener("change", () => {
+    populateItemSelect(itemSelect, domainSelect.value);
+  });
+
+  initPayToggle(document.getElementById("s_pay"));
+  document.getElementById("s_date").value = todayISO();
+
+  let sales = [];
+
+  function renderSales(){
+    const body = document.getElementById("salesBody");
+    const empty = document.getElementById("salesEmpty");
+    body.innerHTML = "";
+
+    if(sales.length === 0){
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+    }
+
+    let totalAll = 0, totalCash = 0, totalBank = 0;
+
+    sales.forEach(row => {
+      const tr = document.createElement("tr");
+      const domainClass = DOMAIN_TAG_CLASS[row.domain] || "";
+      const payClass = row.pay === "كاش" ? "tag-cash" : "tag-bank";
+      tr.innerHTML = `
+        <td>${row.date}</td>
+        <td><span class="tag ${domainClass}">${row.domain}</span></td>
+        <td>${row.item}</td>
+        <td class="num">${row.qty}</td>
+        <td class="num">${formatMoney(row.price)}</td>
+        <td class="num">${formatMoney(row.qty * row.price)}</td>
+        <td><span class="tag ${payClass}">${row.pay}</span></td>
+        <td>${row.note || "—"}</td>
+      `;
+      body.appendChild(tr);
+
+      const rowTotal = row.qty * row.price;
+      totalAll += rowTotal;
+      if(row.pay === "كاش") totalCash += rowTotal; else totalBank += rowTotal;
+    });
+
+    document.getElementById("totAll").innerHTML = `${formatMoney(totalAll)}<span class="display-unit">ج.م</span>`;
+    document.getElementById("totCash").innerHTML = `${formatMoney(totalCash)}<span class="display-unit">ج.م</span>`;
+    document.getElementById("totBank").innerHTML = `${formatMoney(totalBank)}<span class="display-unit">ج.م</span>`;
+    document.getElementById("totCount").textContent = sales.length;
+  }
+
+  document.getElementById("saleForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const row = {
+      date: document.getElementById("s_date").value,
+      domain: domainSelect.value,
+      item: itemSelect.value,
+      qty: Number(document.getElementById("s_qty").value),
+      price: Number(document.getElementById("s_price").value),
+      pay: document.querySelector('input[name="s_pay"]:checked').value,
+      note: document.getElementById("s_note").value.trim()
+    };
+
+    sales.unshift(row);
+    renderSales();
+    saveToBackend("Sales", row);
+
+    e.target.reset();
+    document.getElementById("s_date").value = todayISO();
+    populateItemSelect(itemSelect, "");
+    document.querySelectorAll(".pay-option")[0].classList.add("checked");
+    document.querySelectorAll(".pay-option")[1].classList.remove("checked");
+  });
+
+  renderSales();
+</script>
+</body>
+</html>
