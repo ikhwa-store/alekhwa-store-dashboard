@@ -114,9 +114,13 @@ function showFormStatus(mountEl, ok, message){
 // -------- الاتصال الفعلي بالخادم عبر الوسيط --------
 async function callServer(action, payload){
   try{
+    const body = { key: SECRET_KEY, action, ...payload };
+    if(action !== "googleLogin"){
+      body.token = getTokenParam();
+    }
     const res = await fetch(PROXY_URL, {
       method: "POST",
-      body: JSON.stringify({ key: SECRET_KEY, action, ...payload })
+      body: JSON.stringify(body)
     });
     return await res.json();
   }catch(err){
@@ -128,10 +132,6 @@ async function callServer(action, payload){
 async function saveToBackend(sheetName, payload){
   const action = ACTION_MAP[sheetName];
   return callServer(action, payload);
-}
-
-async function checkEmailOnServer(email){
-  return callServer("checkEmail", { email });
 }
 
 // -------- عناصر التنقل الأساسية --------
@@ -147,18 +147,27 @@ function getEmailParam(){
   return new URLSearchParams(window.location.search).get("email") || "";
 }
 
-function withEmail(href, email){
-  return email ? `${href}?email=${encodeURIComponent(email)}` : href;
+function getTokenParam(){
+  return new URLSearchParams(window.location.search).get("token") || "";
+}
+
+function withSession(href, email, token){
+  const params = new URLSearchParams();
+  if(email) params.set("email", email);
+  if(token) params.set("token", token);
+  const qs = params.toString();
+  return qs ? `${href}?${qs}` : href;
 }
 
 function renderShell(activeKey, userEmail){
   const sidebarMount = document.getElementById("sidebar-mount");
   const bottomMount = document.getElementById("bottomnav-mount");
   const email = userEmail || getEmailParam();
+  const token = getTokenParam();
 
   if(sidebarMount){
     const links = NAV_ITEMS.map(item => `
-      <a class="nav-link ${item.key === activeKey ? "active" : ""}" href="${withEmail(item.href, email)}">
+      <a class="nav-link ${item.key === activeKey ? "active" : ""}" href="${withSession(item.href, email, token)}">
         <span class="ic">${item.icon}</span><span>${item.label}</span>
       </a>`).join("");
 
@@ -183,7 +192,7 @@ function renderShell(activeKey, userEmail){
 
   if(bottomMount){
     const links = NAV_ITEMS.map(item => `
-      <a class="${item.key === activeKey ? "active" : ""}" href="${withEmail(item.href, email)}">
+      <a class="${item.key === activeKey ? "active" : ""}" href="${withSession(item.href, email, token)}">
         <span class="ic">${item.icon}</span><span>${item.label}</span>
       </a>`).join("");
     bottomMount.innerHTML = links;
