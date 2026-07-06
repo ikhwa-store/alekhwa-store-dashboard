@@ -15,7 +15,8 @@ const SECRET_KEY = "IKHWA_SECRET_2026";
 const ACTION_MAP = {
   "Sales": "addSale",
   "Purchases": "addPurchase",
-  "DailySummary": "addSummary",
+  "Expenses": "addExpense",
+  "Withdrawals": "addWithdrawal",
   "GeneralFinance": "addFinance"
 };
 

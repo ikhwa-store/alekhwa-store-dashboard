@@ -16,78 +16,122 @@
       <div>
         <div class="page-eyebrow">إقفال اليوم</div>
         <h1 class="page-title">الملخص اليومي</h1>
-        <p class="page-sub">إجمالي الدخل، المنصرفات، والسحوبات الشخصية — وصافي الدخل يُحسب تلقائيًا</p>
+        <p class="page-sub">محسوب تلقائيًا من المبيعات والمصروفات والسحوبات — إقفال اليوم يحفظ لقطة فقط</p>
       </div>
       <div class="today-chip" id="todayChip"></div>
     </div>
 
     <div id="summarySyncMount"></div>
 
+    <div class="stat-grid">
+      <div class="display-tile">
+        <div class="display-label"><span>دخل اليوم (من المبيعات)</span></div>
+        <div class="display-value is-income" id="totIncome">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>مصروفات اليوم</span></div>
+        <div class="display-value is-expense" id="totExpense">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>سحوبات اليوم</span></div>
+        <div class="display-value" id="totWithdraw">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>صافي الدخل (تلقائي)</span></div>
+        <div class="display-value is-income" id="totNet">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><span class="ic">Σ</span> إقفال يوم جديد</div>
+        <div class="card-title"><span class="ic">＋</span> مصروف جديد</div>
       </div>
-
-      <form id="summaryForm">
+      <form id="expenseForm">
         <div class="form-grid">
           <div class="field">
-            <label for="d_date">التاريخ</label>
-            <input type="date" id="d_date" required>
+            <label for="e_date">التاريخ</label>
+            <input type="date" id="e_date" required>
           </div>
           <div class="field">
-            <label for="d_income">إجمالي الدخل الكلي</label>
-            <input type="number" id="d_income" min="0" step="0.01" placeholder="0.00" required>
+            <label for="e_item">البند</label>
+            <input type="text" id="e_item" placeholder="مثال: إيجار، فاتورة كهرباء" required>
           </div>
           <div class="field">
-            <label for="d_expense">المنصرفات</label>
-            <input type="number" id="d_expense" min="0" step="0.01" placeholder="0.00" required>
+            <label for="e_amount">المبلغ</label>
+            <input type="number" id="e_amount" min="0" step="0.01" placeholder="0.00" required>
           </div>
-
-          <div class="field">
-            <label for="d_withdraw">السحوبات الشخصية</label>
-            <input type="number" id="d_withdraw" min="0" step="0.01" placeholder="0.00" required>
-          </div>
-          <div class="field span-2">
-            <label>صافي الدخل (تلقائي)</label>
-            <input type="text" id="d_net" value="0.00" disabled>
-          </div>
-
           <div class="field span-3">
-            <label for="d_note">الملاحظة (اختياري)</label>
-            <input type="text" id="d_note" placeholder="أي تفصيل عن يوم العمل">
+            <label for="e_note">الملاحظة (اختياري)</label>
+            <input type="text" id="e_note" placeholder="أي تفصيل إضافي">
           </div>
         </div>
-
         <div class="form-actions">
           <button type="reset" class="btn btn-ghost">مسح</button>
-          <button type="submit" class="btn btn-primary">حفظ إقفال اليوم</button>
+          <button type="submit" class="btn btn-primary">حفظ المصروف</button>
         </div>
       </form>
     </div>
 
     <div class="card">
       <div class="card-head">
-        <div class="card-title"><span class="ic">▤</span> سجل الإقفالات</div>
+        <div class="card-title"><span class="ic">＋</span> سحب شخصي جديد</div>
+      </div>
+      <form id="withdrawForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="w_date">التاريخ</label>
+            <input type="date" id="w_date" required>
+          </div>
+          <div class="field">
+            <label for="w_amount">المبلغ</label>
+            <input type="number" id="w_amount" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+          <div class="field span-2">
+            <label for="w_note">الملاحظة (اختياري)</label>
+            <input type="text" id="w_note" placeholder="أي تفصيل إضافي">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="reset" class="btn btn-ghost">مسح</button>
+          <button type="submit" class="btn btn-primary">حفظ السحب</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">▤</span> حركة اليوم</div>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th>التاريخ</th>
-              <th class="num">إجمالي الدخل</th>
-              <th class="num">المنصرفات</th>
-              <th class="num">السحوبات</th>
-              <th class="num">صافي الدخل</th>
-              <th>الملاحظة</th>
-            </tr>
+            <tr><th>النوع</th><th>البند</th><th class="num">المبلغ</th><th>الملاحظة</th></tr>
           </thead>
-          <tbody id="summaryBody"></tbody>
+          <tbody id="movementBody"></tbody>
         </table>
       </div>
-      <div class="empty-state" id="summaryEmpty">
-        <div class="ic">Σ</div>
-        <strong>لا يوجد إقفال محفوظ بعد</strong>
-        <p>سجّل إقفال أول يوم من النموذج أعلاه.</p>
+      <div class="empty-state" id="movementEmpty">
+        <div class="ic">▤</div>
+        <strong>لا توجد حركة مسجّلة اليوم بعد</strong>
+        <p>أي مصروف أو سحب تضيفه سيظهر هنا فورًا.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ic">Σ</span> تأكيد إقفال اليوم</div>
+      </div>
+      <p class="page-sub" style="margin-bottom:14px;">
+        يحفظ هذا الزر لقطة تاريخية من الأرقام أعلاه في سجل الإقفالات، لمراجعة أي يوم سابق لاحقًا.
+      </p>
+      <div class="form-grid">
+        <div class="field span-3">
+          <label for="c_note">ملاحظة الإقفال (اختياري)</label>
+          <input type="text" id="c_note" placeholder="أي تفصيل عن يوم العمل">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="closeDayBtn" class="btn btn-primary">تأكيد إقفال اليوم</button>
       </div>
     </div>
   </main>
@@ -99,87 +143,112 @@
 <script>
   renderShell("summary");
   document.getElementById("todayChip").textContent = todayReadable();
-
   renderSyncNote(
     document.getElementById("summarySyncMount"),
-    "متصل بالخادم — إقفالات اليوم تُخزَّن مباشرة في شيت الملخص اليومي."
+    "متصل بالخادم — الأرقام محسوبة تلقائيًا من مبيعات ومصروفات وسحوبات اليوم فعليًا."
   );
 
-  document.getElementById("d_date").value = todayISO();
+  document.getElementById("e_date").value = todayISO();
+  document.getElementById("w_date").value = todayISO();
 
-  const incomeInput = document.getElementById("d_income");
-  const expenseInput = document.getElementById("d_expense");
-  const withdrawInput = document.getElementById("d_withdraw");
-  const netField = document.getElementById("d_net");
+  async function refreshSummary(){
+    const result = await callServer("getDashboard", { date: todayISO() });
+    if(!result.ok){
+      showFormStatus(document.getElementById("summarySyncMount"), false, result.error || "تعذّر تحميل بيانات اليوم");
+      return;
+    }
 
-  function updateNet(){
-    const income = Number(incomeInput.value) || 0;
-    const expense = Number(expenseInput.value) || 0;
-    const withdraw = Number(withdrawInput.value) || 0;
-    const net = income - expense - withdraw;
-    netField.value = formatMoney(net);
-    netField.style.color = net < 0 ? "var(--expense)" : "var(--income)";
-  }
-  [incomeInput, expenseInput, withdrawInput].forEach(el => el.addEventListener("input", updateNet));
+    document.getElementById("totIncome").innerHTML = `${formatMoney(result.totalIncome)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totExpense").innerHTML = `${formatMoney(result.expense)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totWithdraw").innerHTML = `${formatMoney(result.withdraw)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totNet").innerHTML = `${formatMoney(result.net)}<span class="display-unit">د.إ</span>`;
 
-  let closings = [];
-
-  function renderClosings(){
-    const body = document.getElementById("summaryBody");
-    const empty = document.getElementById("summaryEmpty");
+    const body = document.getElementById("movementBody");
+    const empty = document.getElementById("movementEmpty");
     body.innerHTML = "";
-    empty.style.display = closings.length === 0 ? "block" : "none";
 
-    closings.forEach(row => {
-      const net = row.income - row.expense - row.withdraw;
+    const rows = [
+      ...(result.expenseRows || []).map(r => ({ type: "مصروف", item: r.item, amount: r.amount, note: r.note, cls: "tag-bank" })),
+      ...(result.withdrawRows || []).map(r => ({ type: "سحب شخصي", item: "—", amount: r.amount, note: r.note, cls: "tag-cash" }))
+    ];
+
+    empty.style.display = rows.length === 0 ? "block" : "none";
+
+    rows.forEach(r => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${row.date}</td>
-        <td class="num">${formatMoney(row.income)}</td>
-        <td class="num">${formatMoney(row.expense)}</td>
-        <td class="num">${formatMoney(row.withdraw)}</td>
-        <td class="num" style="color:${net < 0 ? "var(--expense)" : "var(--income)"}">${formatMoney(net)}</td>
-        <td>${row.note || "—"}</td>
+        <td><span class="tag ${r.cls}">${r.type}</span></td>
+        <td>${r.item}</td>
+        <td class="num">${formatMoney(r.amount)}</td>
+        <td>${r.note || "—"}</td>
       `;
       body.appendChild(tr);
     });
   }
 
-  document.getElementById("summaryForm").addEventListener("submit", async (e) => {
+  document.getElementById("expenseForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const row = {
-      date: document.getElementById("d_date").value,
-      income: Number(incomeInput.value),
-      expense: Number(expenseInput.value),
-      withdraw: Number(withdrawInput.value),
-      note: document.getElementById("d_note").value.trim()
+      date: document.getElementById("e_date").value,
+      item: document.getElementById("e_item").value.trim(),
+      amount: Number(document.getElementById("e_amount").value),
+      note: document.getElementById("e_note").value.trim()
     };
-
-    const submitBtn = e.target.querySelector(".btn-primary");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "جاري الحفظ...";
-
-    const result = await saveToBackend("DailySummary", row);
-
-    submitBtn.disabled = false;
-    submitBtn.textContent = "حفظ إقفال اليوم";
+    const btn = e.target.querySelector(".btn-primary");
+    btn.disabled = true; btn.textContent = "جاري الحفظ...";
+    const result = await saveToBackend("Expenses", row);
+    btn.disabled = false; btn.textContent = "حفظ المصروف";
 
     if(!result.ok){
-      showFormStatus(e.target, false, result.error || "فشل الحفظ، حاول مرة أخرى");
+      showFormStatus(e.target, false, result.error || "فشل الحفظ");
       return;
     }
-
-    showFormStatus(e.target, true, "تم حفظ الإقفال بنجاح ✅");
-    closings.unshift(row);
-    renderClosings();
-
+    showFormStatus(e.target, true, "تم حفظ المصروف ✅");
     e.target.reset();
-    document.getElementById("d_date").value = todayISO();
-    netField.value = "0.00";
+    document.getElementById("e_date").value = todayISO();
+    refreshSummary();
   });
 
-  renderClosings();
+  document.getElementById("withdrawForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const row = {
+      date: document.getElementById("w_date").value,
+      amount: Number(document.getElementById("w_amount").value),
+      note: document.getElementById("w_note").value.trim()
+    };
+    const btn = e.target.querySelector(".btn-primary");
+    btn.disabled = true; btn.textContent = "جاري الحفظ...";
+    const result = await saveToBackend("Withdrawals", row);
+    btn.disabled = false; btn.textContent = "حفظ السحب";
+
+    if(!result.ok){
+      showFormStatus(e.target, false, result.error || "فشل الحفظ");
+      return;
+    }
+    showFormStatus(e.target, true, "تم حفظ السحب ✅");
+    e.target.reset();
+    document.getElementById("w_date").value = todayISO();
+    refreshSummary();
+  });
+
+  document.getElementById("closeDayBtn").addEventListener("click", async (e) => {
+    const btn = e.target;
+    btn.disabled = true; btn.textContent = "جاري الإقفال...";
+    const result = await callServer("closeDay", {
+      date: todayISO(),
+      note: document.getElementById("c_note").value.trim()
+    });
+    btn.disabled = false; btn.textContent = "تأكيد إقفال اليوم";
+
+    const mount = btn.closest(".card");
+    if(!result.ok){
+      showFormStatus(mount, false, result.error || "فشل الإقفال");
+      return;
+    }
+    showFormStatus(mount, true, `تم حفظ إقفال اليوم — صافي الدخل: ${formatMoney(result.net)} د.إ ✅`);
+  });
+
+  refreshSummary();
 </script>
 </body>
 </html>
