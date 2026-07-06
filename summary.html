@@ -146,9 +146,8 @@
 
 <script src="assets/app.js"></script>
 <script>
-(async function(){
-  const ok = await enforceSession();
-  if(!ok) return;
+(function(){
+  enforceSession();
 
   renderShell("summary");
   document.getElementById("todayChip").textContent = todayReadable();

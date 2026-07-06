@@ -47,6 +47,28 @@
       </div>
     </div>
 
+    <div class="card-head" style="margin-top:4px;">
+      <div class="card-title"><span class="ic">Σ</span> الإجمالي منذ البداية</div>
+    </div>
+    <div class="stat-grid">
+      <div class="display-tile">
+        <div class="display-label"><span>إجمالي الدخل الكلي</span></div>
+        <div class="display-value is-income" id="totIncomeAll">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>إجمالي المصروفات</span></div>
+        <div class="display-value is-expense" id="totExpenseAll">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>إجمالي السحوبات</span></div>
+        <div class="display-value" id="totWithdrawAll">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+      <div class="display-tile">
+        <div class="display-label"><span>صافي الدخل الكلي</span></div>
+        <div class="display-value is-income" id="totNetAll">0.00<span class="display-unit">د.إ</span></div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-head">
         <div class="card-title"><span class="ic">◈</span> المجالات الثلاثة</div>
@@ -101,9 +123,8 @@
 
 <script src="assets/app.js"></script>
 <script>
-(async function(){
-  const ok = await enforceSession();
-  if(!ok) return;
+(function(){
+  enforceSession(); // تتحقق في الخلفية وترحّل فقط لو الجلسة غير سارية فعليًا
 
   renderShell("dashboard");
   document.getElementById("todayChip").textContent = todayReadable();
@@ -124,6 +145,11 @@
     document.getElementById("totExpense").innerHTML = `${formatMoney(result.expense)}<span class="display-unit">د.إ</span>`;
     document.getElementById("totWithdraw").innerHTML = `${formatMoney(result.withdraw)}<span class="display-unit">د.إ</span>`;
     document.getElementById("totNet").innerHTML = `${formatMoney(result.net)}<span class="display-unit">د.إ</span>`;
+
+    document.getElementById("totIncomeAll").innerHTML = `${formatMoney(result.totalIncomeAll)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totExpenseAll").innerHTML = `${formatMoney(result.expenseAll)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totWithdrawAll").innerHTML = `${formatMoney(result.withdrawAll)}<span class="display-unit">د.إ</span>`;
+    document.getElementById("totNetAll").innerHTML = `${formatMoney(result.netAll)}<span class="display-unit">د.إ</span>`;
 
     Object.keys(CATEGORIES).forEach(domain => {
       const cell = document.getElementById(`domSales_${domain}`);

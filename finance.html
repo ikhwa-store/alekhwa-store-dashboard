@@ -85,9 +85,8 @@
 
 <script src="assets/app.js"></script>
 <script>
-(async function(){
-  const ok = await enforceSession();
-  if(!ok) return;
+(function(){
+  enforceSession();
 
   renderShell("finance");
   document.getElementById("todayChip").textContent = todayReadable();
