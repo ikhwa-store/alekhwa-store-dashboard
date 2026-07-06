@@ -126,7 +126,8 @@
       return;
     }
 
-    window.location.href = `dashboard.html?email=${encodeURIComponent(result.email)}&token=${encodeURIComponent(result.token)}`;
+    saveSession(result.email, result.token);
+    window.location.href = "dashboard.html";
   }
 
   window.onload = function(){

@@ -128,6 +128,7 @@ async function callServer(action, payload){
     const result = await res.json();
 
     if(!result.ok && result.error === SESSION_ERROR_TEXT){
+      clearSession();
       window.location.replace("index.html");
       return result;
     }
@@ -157,6 +158,7 @@ async function enforceSession(){
   }
   const result = await checkSessionOnServer();
   if(!result.ok || !result.valid){
+    clearSession();
     window.location.replace("index.html");
     return false;
   }
@@ -173,30 +175,36 @@ const NAV_ITEMS = [
 ];
 
 function getEmailParam(){
-  return new URLSearchParams(window.location.search).get("email") || "";
+  return localStorage.getItem("ikhwa_email") || "";
 }
 
 function getTokenParam(){
-  return new URLSearchParams(window.location.search).get("token") || "";
+  return localStorage.getItem("ikhwa_token") || "";
 }
 
-function withSession(href, email, token){
-  const params = new URLSearchParams();
-  if(email) params.set("email", email);
-  if(token) params.set("token", token);
-  const qs = params.toString();
-  return qs ? `${href}?${qs}` : href;
+function saveSession(email, token){
+  localStorage.setItem("ikhwa_email", email);
+  localStorage.setItem("ikhwa_token", token);
+}
+
+function clearSession(){
+  localStorage.removeItem("ikhwa_email");
+  localStorage.removeItem("ikhwa_token");
+}
+
+function logout(){
+  clearSession();
+  window.location.href = "index.html";
 }
 
 function renderShell(activeKey, userEmail){
   const sidebarMount = document.getElementById("sidebar-mount");
   const bottomMount = document.getElementById("bottomnav-mount");
   const email = userEmail || getEmailParam();
-  const token = getTokenParam();
 
   if(sidebarMount){
     const links = NAV_ITEMS.map(item => `
-      <a class="nav-link ${item.key === activeKey ? "active" : ""}" href="${withSession(item.href, email, token)}">
+      <a class="nav-link ${item.key === activeKey ? "active" : ""}" href="${item.href}">
         <span class="ic">${item.icon}</span><span>${item.label}</span>
       </a>`).join("");
 
@@ -214,14 +222,14 @@ function renderShell(activeKey, userEmail){
       </div>
       <div class="sidebar-footer">
         <div class="user-chip"><span class="user-dot"></span><span>${email || "غير مسجّل"}</span></div>
-        <a class="logout-link" href="index.html">تسجيل الخروج</a>
+        <a class="logout-link" href="#" onclick="logout(); return false;">تسجيل الخروج</a>
       </div>
     `;
   }
 
   if(bottomMount){
     const links = NAV_ITEMS.map(item => `
-      <a class="${item.key === activeKey ? "active" : ""}" href="${withSession(item.href, email, token)}">
+      <a class="${item.key === activeKey ? "active" : ""}" href="${item.href}">
         <span class="ic">${item.icon}</span><span>${item.label}</span>
       </a>`).join("");
     bottomMount.innerHTML = links;

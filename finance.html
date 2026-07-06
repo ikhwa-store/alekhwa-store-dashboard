@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <script>
-  if(!new URLSearchParams(location.search).get("token")){
+  if(!localStorage.getItem("ikhwa_token")){
     location.replace("index.html");
   }
 </script>
