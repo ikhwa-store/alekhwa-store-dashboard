@@ -113,6 +113,8 @@ function showFormStatus(mountEl, ok, message){
 }
 
 // -------- الاتصال الفعلي بالخادم عبر الوسيط --------
+const SESSION_ERROR_TEXT = "الجلسة غير صالحة أو انتهت، سجّل الدخول من جديد";
+
 async function callServer(action, payload){
   try{
     const body = { key: SECRET_KEY, action, ...payload };
@@ -123,7 +125,14 @@ async function callServer(action, payload){
       method: "POST",
       body: JSON.stringify(body)
     });
-    return await res.json();
+    const result = await res.json();
+
+    if(!result.ok && result.error === SESSION_ERROR_TEXT){
+      window.location.replace("index.html");
+      return result;
+    }
+
+    return result;
   }catch(err){
     console.error("فشل الاتصال بالخادم:", err);
     return { ok: false, error: "تعذّر الوصول للخادم — تحقق من الاتصال بالإنترنت" };
