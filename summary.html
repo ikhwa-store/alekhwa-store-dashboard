@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<script>
+  if(!new URLSearchParams(location.search).get("token")){
+    location.replace("index.html");
+  }
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>الإخوة ستور — الملخص اليومي</title>
@@ -141,6 +146,10 @@
 
 <script src="assets/app.js"></script>
 <script>
+(async function(){
+  const ok = await enforceSession();
+  if(!ok) return;
+
   renderShell("summary");
   document.getElementById("todayChip").textContent = todayReadable();
   renderSyncNote(
@@ -249,6 +258,7 @@
   });
 
   refreshSummary();
+})();
 </script>
 </body>
 </html>

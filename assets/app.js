@@ -135,6 +135,25 @@ async function saveToBackend(sheetName, payload){
   return callServer(action, payload);
 }
 
+async function checkSessionOnServer(){
+  return callServer("checkSession", {});
+}
+
+// -------- حارس الجلسة: يطرد أي زائر بدون جلسة سارية فورًا --------
+async function enforceSession(){
+  const token = getTokenParam();
+  if(!token){
+    window.location.replace("index.html");
+    return false;
+  }
+  const result = await checkSessionOnServer();
+  if(!result.ok || !result.valid){
+    window.location.replace("index.html");
+    return false;
+  }
+  return true;
+}
+
 // -------- عناصر التنقل الأساسية --------
 const NAV_ITEMS = [
   { key: "dashboard",  href: "dashboard.html",  icon: "▤", label: "الرئيسية" },

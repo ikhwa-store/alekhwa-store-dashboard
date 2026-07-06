@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<script>
+  if(!new URLSearchParams(location.search).get("token")){
+    location.replace("index.html");
+  }
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>الإخوة ستور — المشتريات</title>
@@ -117,6 +122,10 @@
 
 <script src="assets/app.js"></script>
 <script>
+(async function(){
+  const ok = await enforceSession();
+  if(!ok) return;
+
   renderShell("purchases");
   document.getElementById("todayChip").textContent = todayReadable();
 
@@ -219,6 +228,7 @@
   });
 
   renderPurchases();
+})();
 </script>
 </body>
 </html>
