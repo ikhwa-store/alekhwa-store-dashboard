@@ -232,7 +232,10 @@ function renderShell(activeKey, userEmail){
       <a class="${item.key === activeKey ? "active" : ""}" href="${item.href}">
         <span class="ic">${item.icon}</span><span>${item.label}</span>
       </a>`).join("");
-    bottomMount.innerHTML = links;
+    bottomMount.innerHTML = links + `
+      <a href="#" onclick="logout(); return false;">
+        <span class="ic">⏻</span><span>خروج</span>
+      </a>`;
   }
 }
 
