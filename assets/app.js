@@ -202,6 +202,17 @@ function renderShell(activeKey, userEmail){
   const bottomMount = document.getElementById("bottomnav-mount");
   const email = userEmail || getEmailParam();
 
+  if(!document.getElementById("apkBadge")){
+    const badge = document.createElement("a");
+    badge.id = "apkBadge";
+    badge.className = "apk-badge";
+    badge.href = "https://github.com/ikhwa-store/alekhwa-store-dashboard/releases/latest/download/ikhwa-store.apk";
+    badge.target = "_blank";
+    badge.rel = "noopener";
+    badge.innerHTML = "⬇ تحميل التطبيق";
+    document.body.appendChild(badge);
+  }
+
   if(sidebarMount){
     const links = NAV_ITEMS.map(item => `
       <a class="nav-link ${item.key === activeKey ? "active" : ""}" href="${item.href}">

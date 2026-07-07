@@ -562,6 +562,26 @@ td.num, th.num{
   flex-shrink: 0;
 }
 
+/* ============ شارة تحميل التطبيق ============ */
+.apk-badge{
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+.apk-badge:hover{ border-color: var(--gold); }
+
 /* ============ التنقل السفلي (موبايل / ويب فيو) ============ */
 .bottom-nav{ display: none; }
 
